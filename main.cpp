@@ -26,7 +26,7 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 
 #define DICTIONARY "oxford.txt"
 
-#define TOLERANCE
+#define TOLERANCE 3
 
 #define PRINT_HELP \
 	std::cout << "A simple commandline dictionary\n\n"\
@@ -46,10 +46,10 @@ int compare(std::string, std::string);
 int linear_search(std::ifstream&, std::string);
 
 //did you mean ____?
+bool unique_entry(std::string word, linked_list& word_list);
 void guess(std::ifstream&, std::string, linked_list&);
 
 //is the word not already in word_list
-bool unique_entry(std::string word, linked_list& word_list);
 
 //evaluate similarity
 int how_similar(std::string, std::string);
@@ -98,7 +98,7 @@ int linear_search(std::ifstream& dictionary, std::string target)
 	dictionary.seekg(0, std::ifstream::beg);
 	while (compare(word, target) != 0) {
 		dictionary.ignore(1024, '\n');
-		dictionary >> word;
+		std::getline(dictionary, word, ' ');
 		if (dictionary.eof())
 			return -1;
 	}
@@ -148,7 +148,7 @@ void guess(std::ifstream& dictionary, std::string entry, linked_list& potentials
 	dictionary.clear();
 	dictionary.seekg(0);
 	while (dictionary.peek() != EOF) {
-		dictionary >> word;
+		std::getline(dictionary, word, ' ');
 		dictionary.ignore(1024, '\n');
 		if (how_similar(word, entry) < TOLERANCE && unique_entry(word, potentials))
 			potentials.add_node(word);
