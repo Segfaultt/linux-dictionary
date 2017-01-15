@@ -31,7 +31,8 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 #define PRINT_HELP \
 	std::cout << "A simple commandline dictionary\n\n"\
 	<< "USAGE:\n"\
-	<< '\t' << argv[0] << " [-s] [-d <path to dictionary>] <word>\n"\
+	<< '\t' << argv[0] << " [-d <path to dictionary>] <word>\n"\
+	<< '\t' << argv[0] << " (interactive mode)\n"\
 	<< "EXAMPLES:\n"\
 	<< '\t' << argv[0] << " Zephyr\n"\
 	<< '\t' << argv[0] << " -d ~/Downloads/dictionary.txt Yarmulke\n";
@@ -54,10 +55,12 @@ void guess(std::ifstream&, std::string, linked_list&);
 //evaluate similarity
 int how_similar(std::string, std::string);
 
+void linux_dictionary(std::ifstream&, std::string);
+
 int main(int argc, char* argv[])
 {
 	//check arg count
-	if (!(argc == 2 || argc == 4)) {
+	if (!(argc == 2 || argc == 4 || argc == 1)) {
 		PRINT_HELP
 		return -1;
 	}
@@ -75,21 +78,47 @@ int main(int argc, char* argv[])
 			  << std::endl;
 		return -2;
 	}
-
-	//search for word
-	std::string target(argv[argc - 1]);
-	if (linear_search(dictionary, target) != 0) {
-		std::cout << "Unable to find word, did you mean one of the following?\n";
-		linked_list potentials;
-		guess(dictionary, target, potentials);
-		for (int i = 1; i <= potentials.get_length(); i++) {
-			std::cout << potentials.get_node(i).word << std::endl;
+	
+	if (argc == 1) {
+		//print message
+		std::cout << "\tlinux-dictionary Copyright (C) 2017 Luca Pengelly\n"
+			  << "\tThis program comes with ABSOLUTELY NO WARRANTY; for details type `\\warranty'.\n"
+			  << "\tThis is free software, and you are welcome to redistribute it\n"
+			  << "\tunder certain conditions; type `\\conditions' for details.\n"
+			  << "\nWelcome to linux-dictionary interactive mode\n"
+			  << "type in any word you wish to see the definition of\n"
+			  << "type '\\exit' to exit\n"
+			  << "\n>";
+		std::string entry;
+		std::getline(std::cin, entry);
+		while (entry != "\\exit") {
+			linux_dictionary(dictionary, entry);
+			std::cout << "\n>";
+			std::getline(std::cin, entry);
 		}
-		return -3;
+	} else {
+		std::string target(argv[argc - 1]);
+		linux_dictionary(dictionary, target);
 	}
 
 	return 0;
 }
+
+void linux_dictionary(std::ifstream& dictionary, std::string target)
+{
+	//search for word
+	if (linear_search(dictionary, target) != 0) {
+		std::cout << "Unable to find word\n";
+		linked_list potentials;
+		guess(dictionary, target, potentials);
+		if (potentials.get_length() > 0)
+			std::cout << "Did you mean:\n";
+		for (int i = 1; i <= potentials.get_length(); i++) {//print guesses
+			std::cout << potentials.get_node(i).word << std::endl;
+		}
+	}
+}
+
 
 //find word in dictionary
 int linear_search(std::ifstream& dictionary, std::string target)
