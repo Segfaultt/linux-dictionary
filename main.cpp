@@ -21,6 +21,7 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstdlib>
 #include "data_structures.h"
 
 #define DICTIONARY "oxford.txt"
@@ -42,6 +43,12 @@ int compare(std::string, std::string);
 //find word in dictionary
 int binary_search(std::ifstream&, std::string);
 int linear_search(std::ifstream&, std::string);
+
+//did you mean ____?
+void guess(std::ifstream&, std::string, linked_list&);
+
+//evaluate similarity
+int how_similar(std::string, std::string);
 
 int main(int argc, char* argv[])
 {
@@ -68,13 +75,19 @@ int main(int argc, char* argv[])
 	//search for word
 	std::string target(argv[argc - 1]);
 	if (linear_search(dictionary, target) != 0) {
-		std::cerr << "Error: word not found\n";
+		std::cout << "Unable to find word, did you mean one of the following?\n";
+		linked_list potentials;
+		guess(dictionary, target, potentials);
+		for (int i = potentials.get_length(); i > 0; i--) {
+			std::cout << potentials.get_node(i).word << std::endl;
+		}
 		return -3;
 	}
 
 	return 0;
 }
 
+//find word in dictionary
 int linear_search(std::ifstream& dictionary, std::string target)
 {
 	std::string word;
@@ -146,6 +159,7 @@ int binary_search(std::ifstream& dictionary, std::string target)
 int compare(std::string a, std::string b)
 {
 	int longest_length;
+
 	if (a.length() < b.length())
 		longest_length = b.length();
 	else
@@ -165,4 +179,43 @@ int compare(std::string a, std::string b)
 	}
 
 	return 0;
+}
+
+//did you mean ____?
+void guess(std::ifstream& dictionary, std::string entry, linked_list& potentials)
+{
+	std::string word;
+
+	dictionary.clear();
+	dictionary.seekg(0);
+	while (dictionary.peek() != EOF) {
+		dictionary.ignore(1024, '\n');
+		dictionary >> word;
+		if (how_similar(word, entry) < 3)
+			potentials.add_node(word);
+	}
+}
+
+//evaluate similarity
+int how_similar(std::string a, std::string b)
+{
+	int similarity = 0, longest_length;
+
+	similarity += abs(a.length() - b.length());
+
+	if (a.length() < b.length())
+		longest_length = b.length();
+	else
+		longest_length = a.length();
+	
+	for (int i = 0; i < longest_length; i++) {
+		if (a[i] > 94)
+			a[i] -= 32;
+		if (b[i] > 94)
+			b[i] -= 32;
+		if (a[i] != b[i])
+			similarity += (longest_length-i);
+	}
+
+	return similarity;
 }
