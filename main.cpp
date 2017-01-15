@@ -1,16 +1,47 @@
+/*
+Copyright (C) 2017  Luca Pengelly
+
+This file is part of linux-dictionary.
+
+linux-dictionary is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+linux-dictionary is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#define NDEBUG
+
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "data_structures.h"
 
-#define DICTIONARY "Oxford English Dictionary.txt"
+#define DICTIONARY "oxford.txt"
 
 #define PRINT_HELP \
 	std::cout << "A simple commandline dictionary\n\n"\
 	<< "USAGE:\n"\
-	<< '\t' << argv[0] << " [-d <path to dictionary>] <word>\n"\
+	<< '\t' << argv[0] << " [-s] [-d <path to dictionary>] <word>\n"\
 	<< "EXAMPLES:\n"\
 	<< '\t' << argv[0] << " Zephyr\n"\
 	<< '\t' << argv[0] << " -d ~/Downloads/dictionary.txt Yarmulke\n";
+
+//case insensitive equality check
+//returns 0 if a = b
+//returns 1 if a > b
+//returns -1 if a < b
+int compare(std::string, std::string);
+
+//find word in dictionary
+int binary_search(std::ifstream&, std::string);
+int linear_search(std::ifstream&, std::string);
 
 int main(int argc, char* argv[])
 {
@@ -22,28 +53,116 @@ int main(int argc, char* argv[])
 
 	//open dictionary
 	std::ifstream dictionary;
-	char* dictionary_file_location = "Oxford English Dictionary.txt";
 	if (argc == 4)
-		dictionary_file_location = argv[2];
-	#ifndef NDEBUG
-		std::cout << "opening dictionary "
-		          << dictionary_file_location
-			  << std::endl;
-	#endif
-	dictionary.open(dictionary_file_location, std::ifstream::ate);
-	dictionary.seekg(dictionary.tellg() / 2); //go to middle of file
-	
+		dictionary.open(argv[2], std::ifstream::ate);
+	else
+		dictionary.open(DICTIONARY, std::ifstream::ate);
+
+	//check if open
 	if (!dictionary.is_open()) {
-		std::cerr << "ERROR: unable to open dictionary \""
-		          << dictionary_file_location
+		std::cerr << "Error: unable to open dictionary \""
 			  << std::endl;
-		return -1;
+		return -2;
 	}
-	#ifndef NDEBUG
-		std::cout << "opened dictionary. dictionary.tellg() = "
-		          << dictionary.tellg()
-			  << std::endl;
-	#endif
+
+	//search for word
+	std::string target(argv[argc - 1]);
+	if (linear_search(dictionary, target) != 0) {
+		std::cerr << "Error: word not found\n";
+		return -3;
+	}
+
+	return 0;
+}
+
+int linear_search(std::ifstream& dictionary, std::string target)
+{
+	std::string word;
+	dictionary.seekg(0, std::ifstream::beg);
+	while (compare(word, target) != 0) {
+		dictionary.ignore(1024, '\n');
+		dictionary >> word;
+		if (dictionary.eof())
+			return -1;
+	}
+
+	std::string definition;
+	std::getline(dictionary, definition);
+	std::cout << '\t' << word << std::endl;
+	std::cout << definition << std::endl;
+
+	return 0;
+}
+
+//find word in dictionary
+int binary_search(std::ifstream& dictionary, std::string target)
+{
+	std::string word;
+	dictionary.seekg(0, std::ifstream::end);
+	int min = 0, max = dictionary.tellg(), place;
+	bool found = false;
+
+	do {
+		dictionary.seekg((min + max) / 2);
+		place = dictionary.tellg();
+
+		while (dictionary.get() != '\n' && dictionary.good()) {
+			dictionary.seekg(place - 2);
+			place = dictionary.tellg();
+		}
+		dictionary.ignore(5);
+		dictionary >> word;
+
+		if (dictionary.eof())
+			return -1;
+
+		switch (compare(word, target)) {
+			case 1:
+			min = place - 1;
+			break;
+
+			case -1:
+			max = place - 1;
+			break;
+			
+			case 0:
+			found = true;
+			break;
+		}
+	} while (found);
+
+	std::string definition;
+	std::getline(dictionary, definition);
+
+	std::cout << word << definition;
+
+	return 0;
+}
+
+//case insensitive equality check
+//returns 0 if a = b
+//returns 1 if a > b
+//returns -1 if a < b
+int compare(std::string a, std::string b)
+{
+	int longest_length;
+	if (a.length() < b.length())
+		longest_length = b.length();
+	else
+		longest_length = a.length();
+	
+	for (int i = 0; i < longest_length; i++) {
+		if (a[i] > 94)
+			a[i] -= 32;
+		if (b[i] > 94)
+			b[i] -= 32;
+		if (a[i] > b[i]) {
+			return 1;
+		}
+		if (b[i] > a[i]) {
+			return -1;
+		}
+	}
 
 	return 0;
 }
