@@ -26,6 +26,8 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 
 #define DICTIONARY "oxford.txt"
 
+#define TOLERANCE
+
 #define PRINT_HELP \
 	std::cout << "A simple commandline dictionary\n\n"\
 	<< "USAGE:\n"\
@@ -45,6 +47,9 @@ int linear_search(std::ifstream&, std::string);
 
 //did you mean ____?
 void guess(std::ifstream&, std::string, linked_list&);
+
+//is the word not already in word_list
+bool unique_entry(std::string word, linked_list& word_list);
 
 //evaluate similarity
 int how_similar(std::string, std::string);
@@ -77,7 +82,7 @@ int main(int argc, char* argv[])
 		std::cout << "Unable to find word, did you mean one of the following?\n";
 		linked_list potentials;
 		guess(dictionary, target, potentials);
-		for (int i = potentials.get_length(); i > 0; i--) {
+		for (int i = 1; i <= potentials.get_length(); i++) {
 			std::cout << potentials.get_node(i).word << std::endl;
 		}
 		return -3;
@@ -143,13 +148,21 @@ void guess(std::ifstream& dictionary, std::string entry, linked_list& potentials
 	dictionary.clear();
 	dictionary.seekg(0);
 	while (dictionary.peek() != EOF) {
-		dictionary.ignore(1024, '\n');
 		dictionary >> word;
-		if (how_similar(word, entry) < 3)
+		dictionary.ignore(1024, '\n');
+		if (how_similar(word, entry) < TOLERANCE && unique_entry(word, potentials))
 			potentials.add_node(word);
 	}
 }
 
+bool unique_entry(std::string word, linked_list& word_list)
+{
+	for (int i = 1; i <= word_list.get_length(); i++) {
+		if (word_list.get_node(i).word == word)
+			return false;
+	}
+	return true;
+}
 //evaluate similarity
 int how_similar(std::string a, std::string b)
 {
