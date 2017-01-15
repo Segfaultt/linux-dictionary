@@ -41,7 +41,6 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 int compare(std::string, std::string);
 
 //find word in dictionary
-int binary_search(std::ifstream&, std::string);
 int linear_search(std::ifstream&, std::string);
 
 //did you mean ____?
@@ -103,51 +102,6 @@ int linear_search(std::ifstream& dictionary, std::string target)
 	std::getline(dictionary, definition);
 	std::cout << '\t' << word << std::endl;
 	std::cout << definition << std::endl;
-
-	return 0;
-}
-
-//find word in dictionary
-int binary_search(std::ifstream& dictionary, std::string target)
-{
-	std::string word;
-	dictionary.seekg(0, std::ifstream::end);
-	int min = 0, max = dictionary.tellg(), place;
-	bool found = false;
-
-	do {
-		dictionary.seekg((min + max) / 2);
-		place = dictionary.tellg();
-
-		while (dictionary.get() != '\n' && dictionary.good()) {
-			dictionary.seekg(place - 2);
-			place = dictionary.tellg();
-		}
-		dictionary.ignore(5);
-		dictionary >> word;
-
-		if (dictionary.eof())
-			return -1;
-
-		switch (compare(word, target)) {
-			case 1:
-			min = place - 1;
-			break;
-
-			case -1:
-			max = place - 1;
-			break;
-			
-			case 0:
-			found = true;
-			break;
-		}
-	} while (found);
-
-	std::string definition;
-	std::getline(dictionary, definition);
-
-	std::cout << word << definition;
 
 	return 0;
 }
