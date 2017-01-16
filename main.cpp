@@ -24,7 +24,7 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include "data_structures.h"
 
-#define DICTIONARY "oxford.txt"
+#define DICTIONARY "/etc/linux-dictionary/oxford.txt"
 
 #define TOLERANCE 3
 
@@ -74,21 +74,22 @@ int main(int argc, char* argv[])
 
 	//check if open
 	if (!dictionary.is_open()) {
-		std::cerr << "Error: unable to open dictionary \""
+		std::cerr << "Error: unable to open dictionary"
 			  << std::endl;
 		return -2;
 	}
 	
 	if (argc == 1) {
 		//print message
-		std::cout << "\tlinux-dictionary Copyright (C) 2017 Luca Pengelly\n"
-			  << "\tThis program comes with ABSOLUTELY NO WARRANTY; for details type `\\warranty'.\n"
-			  << "\tThis is free software, and you are welcome to redistribute it\n"
-			  << "\tunder certain conditions; type `\\conditions' for details.\n"
+		std::cout << "linux-dictionary Copyright (C) 2017 Luca Pengelly\n"
+			  << "This program comes with ABSOLUTELY NO WARRANTY.\n"
+			  << "This is free software, and you are welcome to redistribute it\n"
+			  << "under certain conditions. linux-dictionary is released under the GNU GPL.\n"
 			  << "\nWelcome to linux-dictionary interactive mode\n"
 			  << "type in any word you wish to see the definition of\n"
 			  << "type '\\exit' to exit\n"
 			  << "\n>";
+
 		std::string entry;
 		std::getline(std::cin, entry);
 		while (entry != "\\exit") {
@@ -179,7 +180,7 @@ void guess(std::ifstream& dictionary, std::string entry, linked_list& potentials
 	while (dictionary.peek() != EOF) {
 		std::getline(dictionary, word, ' ');
 		dictionary.ignore(1024, '\n');
-		if (how_similar(word, entry) < TOLERANCE && unique_entry(word, potentials))
+		if (how_similar(word, entry) < TOLERANCE*word.length() && unique_entry(word, potentials))
 			potentials.add_node(word);
 	}
 }
