@@ -60,14 +60,14 @@ void linux_dictionary(std::ifstream&, std::string);
 int main(int argc, char* argv[])
 {
 	//check arg count
-	if (!(argc == 2 || argc == 4 || argc == 1)) {
+	if (argc > 4 || argc < 1) {
 		PRINT_HELP
 		return -1;
 	}
 
 	//open dictionary
 	std::ifstream dictionary;
-	if (argc == 4)
+	if (argc == 4 || argc == 3)
 		dictionary.open(argv[2], std::ifstream::ate);
 	else
 		dictionary.open(DICTIONARY, std::ifstream::ate);
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 		return -2;
 	}
 	
-	if (argc == 1) {
+	if (argc == 1 || argc == 3) {
 		//print message
 		std::cout << "linux-dictionary Copyright (C) 2017 Luca Pengelly\n"
 			  << "This program comes with ABSOLUTELY NO WARRANTY.\n"
