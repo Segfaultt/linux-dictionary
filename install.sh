@@ -21,6 +21,7 @@ else
 fi
 
 #compile
+echo Building
 $COMPILER main.cpp -o /usr/local/bin/linux-dictionary || exit -2
 
 #create dictionary dir

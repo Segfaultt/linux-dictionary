@@ -21,8 +21,8 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <climits>
 #include <cstdlib>
-#include "data_structures.h"
 
 #define DICTIONARY "/etc/linux-dictionary/oxford.txt"
 
@@ -46,11 +46,7 @@ int compare(std::string, std::string);
 //find word in dictionary
 int linear_search(std::ifstream&, std::string);
 
-//did you mean ____?
-bool unique_entry(std::string word, linked_list& word_list);
-void guess(std::ifstream&, std::string, linked_list&);
-
-//is the word not already in word_list
+void print_similar(std::ifstream&, std::string);
 
 //evaluate similarity
 int how_similar(std::string, std::string);
@@ -79,7 +75,7 @@ int main(int argc, char* argv[])
 		return -2;
 	}
 	
-	if (argc == 1 || argc == 3) {
+	if (argc == 1 || argc == 3) {//interactive mode
 		//print message
 		std::cout << "linux-dictionary Copyright (C) 2017 Luca Pengelly\n"
 			  << "This program comes with ABSOLUTELY NO WARRANTY.\n"
@@ -97,7 +93,7 @@ int main(int argc, char* argv[])
 			std::cout << "\n>";
 			std::getline(std::cin, entry);
 		}
-	} else {
+	} else {//non interactive
 		std::string target(argv[argc - 1]);
 		linux_dictionary(dictionary, target);
 	}
@@ -109,14 +105,9 @@ void linux_dictionary(std::ifstream& dictionary, std::string target)
 {
 	//search for word
 	if (linear_search(dictionary, target) != 0) {
-		std::cout << "Unable to find word\n";
-		linked_list potentials;
-		guess(dictionary, target, potentials);
-		if (potentials.get_length() > 0)
-			std::cout << "Did you mean:\n";
-		for (int i = 1; i <= potentials.get_length(); i++) {//print guesses
-			std::cout << potentials.get_node(i).word << std::endl;
-		}
+		std::cout << "Unable to find word\n"
+		          << "Did you mean:\n";
+		print_similar (dictionary, target);
 	}
 }
 
@@ -170,29 +161,50 @@ int compare(std::string a, std::string b)
 	return 0;
 }
 
-//did you mean ____?
-void guess(std::ifstream& dictionary, std::string entry, linked_list& potentials)
-{
+struct potential {
 	std::string word;
+	int similarity;
 
-	dictionary.clear();
-	dictionary.seekg(0);
-	while (dictionary.peek() != EOF) {
-		std::getline(dictionary, word, ' ');
-		dictionary.ignore(1024, '\n');
-		if (how_similar(word, entry) < TOLERANCE*word.length() && unique_entry(word, potentials))
-			potentials.add_node(word);
-	}
+	potential();
+};
+
+potential::potential() {
+	word = "";
+	similarity = INT_MAX;
 }
 
-bool unique_entry(std::string word, linked_list& word_list)
+void print_similar(std::ifstream& dictionary, std::string target)
 {
-	for (int i = 1; i <= word_list.get_length(); i++) {
-		if (word_list.get_node(i).word == word)
-			return false;
+	potential list[10];//create array of top 10 potential words
+	potential current;
+	bool put_in;
+	
+	dictionary.clear();
+	dictionary.seekg(0, dictionary.beg);
+	while (dictionary.peek() != EOF) {
+		put_in = false;
+		dictionary.ignore(1024, '\n');
+		std::getline(dictionary, current.word, ' ');
+		current.similarity = how_similar(current.word, target);
+		
+		//put in top 10?
+		for (int i = 0; i < 10 && !put_in; i++) {
+			if (current.word == list[i].word)
+				put_in = true;
+			if (current.similarity < list[i].similarity && current.word.length() > 1) {
+				list[i].word = current.word;
+				list[i].similarity = current.similarity;
+				put_in = true;
+			}
+		}
 	}
-	return true;
+
+	//print list
+	for (int i = 0; i < 10; i++) {
+		std::cout << list[i].word << std::endl;
+	}
 }
+
 //evaluate similarity
 int how_similar(std::string a, std::string b)
 {
