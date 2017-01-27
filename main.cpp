@@ -104,6 +104,8 @@ int main(int argc, char* argv[])
 void linux_dictionary(std::ifstream& dictionary, std::string target)
 {
 	//search for word
+	dictionary.clear();
+	dictionary.seekg(0, std::ifstream::beg);
 	if (linear_search(dictionary, target) != 0) {
 		std::cout << "Unable to find word\n"
 		          << "Did you mean:\n";
