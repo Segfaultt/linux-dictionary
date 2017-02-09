@@ -31,6 +31,7 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 #define PRINT_HELP \
 	std::cout << "A simple commandline dictionary\n\n"\
 	<< "USAGE:\n"\
+	<< '\t' << argv[0] << " <-h | --help>\tprint this\n" \
 	<< '\t' << argv[0] << " [-d <path to dictionary>] <word>\n"\
 	<< '\t' << argv[0] << " (interactive mode)\n"\
 	<< "EXAMPLES:\n"\
@@ -56,9 +57,15 @@ void linux_dictionary(std::ifstream&, std::string);
 int main(int argc, char* argv[])
 {
 	//check arg count
-	if (argc > 4 || argc < 1) {
+	if (argc > 4 || argc == 2 && (argv[1] == "--help" || argv[1] == "-h")) {
 		PRINT_HELP
 		return -1;
+	}
+
+	//check help option
+	if ((std::string)argv[1] == "--help" || (std::string)argv[1] == "-h") {
+		PRINT_HELP
+		return 0;
 	}
 
 	//open dictionary
