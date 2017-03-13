@@ -23,6 +23,7 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <climits>
 #include <cstdlib>
+#include <time.h>
 
 #define DICTIONARY "/etc/linux-dictionary/oxford.txt"
 
@@ -34,6 +35,7 @@ along with linux-dictionary.  If not, see <http://www.gnu.org/licenses/>.
 	<< '\t' << argv[0] << " <-h | --help>\tprint this\n" \
 	<< '\t' << argv[0] << " [-d <path to dictionary>] <word>\n"\
 	<< '\t' << argv[0] << " (interactive mode)\n"\
+	<< '\t' << argv[0] << " --random\n"\
 	<< "EXAMPLES:\n"\
 	<< '\t' << argv[0] << " Zephyr\n"\
 	<< '\t' << argv[0] << " -d ~/Downloads/dictionary.txt Yarmulke\n";
@@ -81,8 +83,20 @@ int main(int argc, char* argv[])
 			  << std::endl;
 		return -2;
 	}
-	
-	if (argc == 1 || argc == 3) {//interactive mode
+
+	if (argc == 2 && (std::string)argv[1] == "--random") {//random word
+		srand(time(NULL));
+		dictionary.seekg(0, std::ios_base::end);
+		dictionary.seekg(rand()%dictionary.tellg());
+		dictionary.ignore(1024, '\n');
+
+		std::string word, line;
+		std::getline(dictionary, word, ' ');
+		std::getline(dictionary, line, '\n');
+
+		std::cout << '\t' << word << std::endl
+			  << line << std::endl;
+	} else if (argc == 1 || argc == 3) {//interactive mode
 		//print message
 		std::cout << "linux-dictionary Copyright (C) 2017 Luca Pengelly\n"
 			  << "This program comes with ABSOLUTELY NO WARRANTY.\n"
@@ -92,7 +106,6 @@ int main(int argc, char* argv[])
 			  << "type in any word you wish to see the definition of\n"
 			  << "type '\\exit' to exit\n"
 			  << "\n>";
-
 		std::string entry;
 		std::getline(std::cin, entry);
 		while (entry != "\\exit") {
