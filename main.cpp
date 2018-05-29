@@ -200,6 +200,9 @@ void print_similar(std::ifstream& dictionary, std::string target)
 	potential list[10];//create array of top 10 potential words
 	potential current;
 	bool put_in;
+
+	for (int i = 0; i < 10; i < i++)
+		list[i].word = "";
 	
 	dictionary.clear();
 	dictionary.seekg(0, dictionary.beg);
